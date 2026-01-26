@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Crossy Road Style Hopper with Skins</title>
+<style>
+body {
+    margin: 0;
+    background: #87ceeb;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    touch-action: none;
+}
+canvas {
+    display: block;
+    width: 95vw;
+    max-width: 600px;
+    height: 90vh;
+    margin: 10px 0;
+    border: 2px solid black;
+}
+#score {
+    position: absolute;
+    top: 10px;
+    left: 20px;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+}
+#gameOverModal, #shopModal {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.modalContent {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    width: 90%;
+    max-width: 400px;
+}
+.modalContent h1 {
+    font-size: 40px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+.modalContent button {
+    font-size: 18px;
+    padding: 10px 20px;
+    margin: 10px;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+}
+.skinCard {
+    display: inline-block;
+    margin: 10px;
+    padding: 10px;
+    border: 2px solid #333;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+}
+.skinCanvas {
+    width: 60px;
+    height: 60px;
+    display: block;
+    margin: auto;
+}
+.skinPrice {
+    margin-top: 5px;
+    font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<div id="score">Score: 0</div>
+<canvas id="gameCanvas" width="500" height="750"></canvas>
+
+<div id="gameOverModal">
+    <div class="modalContent">
+        <button id="restartBtn" style="font-size: 24px; padding: 10px 20px; cursor:pointer; border-radius:8px; border:none; background:#3b6cff; color:white;">Restart</button>
+        <button id="openShopBtn">Shop</button>
+    </div>
+</div>
+
+<div id="shopModal" style="display:none;">
+    <div class="modalContent">
+        <h1>Shop</h1>
+        <div id="skinsContainer"></div>
+        <button id="closeShopBtn">Close</button>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+const TILE = 40;
+const LANE_HEIGHT = 80;
+const VIEW_AHEAD = 8;
+const VIEW_BEHIND = 5;
+const SAFE_START_LANES = 3;
+
+/* ================= PLAYER ================= */
+const player = {
+    laneX: 4,
+    laneY: SAFE_START_LANES,
+    x: 0,
+    y: 0,
+    targetX: 0,
+    targetY: 0,
+    size: 28,
+    color: "#3b6cff",
+    skin: "default" // default or chicken
+};
+
+function gridToWorld() {
+    player.targetX = player.laneX * TILE + (TILE - player.size) / 2;
+    player.targetY = player.laneY * LANE_HEIGHT + (LANE_HEIGHT - player.size) / 2;
+}
+gridToWorld();
+player.x = player.targetX;
+player.y = player.targetY;
+
+const startRow = player.laneY;
+const barrierRow = startRow + 10; // barrier 10 lanes below starting player
+
+/* ================= GAME STATE ================= */
+let lanes = new Map();
+let cameraY = player.y - canvas.height/2;
+let highestRow = startRow;
+let score = 0;
+let gameOver = false;
+let gold = 0;
+
+/* ================= DRAW HELPERS ================= */
+function drawShadow(x, y, w, h) {
+    ctx.fillStyle = "rgba(0,0,0,0.25)";
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h + 6, w * 0.5, h * 0.25, 0, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function drawPlayer() {
+    const px = player.x;
+    const py = player.y - cameraY - 8;
+
+    drawShadow(player.x, player.y - cameraY, player.size, player.size);
+
+    if (player.skin === "chicken") {
+        ctx.fillStyle = "white";
+        ctx.fillRect(px, py, player.size, player.size);
+        ctx.fillStyle = "red";
+        ctx.fillRect(px + player.size*0.25, py - 4, player.size*0.5, 4);
+        ctx.fillStyle = "black";
+        ctx.fillRect(px + 5, py + 8, 4,4);
+        ctx.fillRect(px + player.size - 9, py + 8, 4,4);
+        ctx.fillStyle = "yellow";
+        ctx.fillRect(px + 6, py + player.size - 6, 4,6);
+        ctx.fillRect(px + player.size - 10, py + player.size - 6, 4,6);
+    } else {
+        ctx.fillStyle = player.color;
+        ctx.fillRect(px, py, player.size, player.size);
+    }
+}
+
+function drawCar(car) {
+    const y = car.y - cameraY;
+    drawShadow(car.x, y, car.w, car.h);
+
+    ctx.fillStyle = car.color;
+    ctx.beginPath();
+    ctx.roundRect(car.x, y - 6, car.w, car.h, 8);
+    ctx.fill();
+
+    ctx.fillStyle = "#9ddcff";
+    ctx.fillRect(car.x + 10, y - 12, car.w - 20, 8);
+
+    ctx.fillStyle = "#111";
+    ctx.beginPath();
+    ctx.arc(car.x + 10, y + car.h - 2, 4, 0, Math.PI * 2);
+    ctx.arc(car.x + car.w - 10, y + car.h - 2, 4, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+/* ================= LANE GENERATION ================= */
+function generateLane(row) {
+    if (row >= startRow && row < startRow + SAFE_START_LANES) return { type: "grass", cars: [], trees: [], coins: [] };
+
+    const isRoad = row < startRow && Math.random() < 0.45;
+    const lane = { type: isRoad ? "road" : "grass", cars: [], trees: [], coins: [] };
+
+    if (lane.type === "road") {
+        const direction = Math.random() < 0.5 ? 1 : -1;
+        const difficulty = startRow - row;
+        const laneSpeed = (1.2 + Math.random() * 0.6) * (1 + difficulty * 0.035) * direction;
+        const count = Math.min(1 + Math.floor(difficulty / 6), 3);
+        for (let i = 0; i < count; i++) lane.cars.push({x: direction === 1 ? -i * 200 : canvas.width + i * 200,y: row*LANE_HEIGHT + LANE_HEIGHT/2,w:54,h:26,speed:laneSpeed,color:`hsl(${Math.random()*360},70%,55%)`});
+    } else {
+        const treeCount = Math.floor(Math.random()*3);
+        for (let i=0;i<treeCount;i++) lane.trees.push({col: Math.floor(Math.random()*10)});
+        const coinCount = Math.floor(Math.random()*3);
+        for (let i=0;i<coinCount;i++) {
+            let col;
+            do {
+                col = Math.floor(Math.random()*10);
+            } while (lane.trees.find(t=>t.col===col));
+            lane.coins.push({col});
+        }
+    }
+    return lane;
+}
+
+/* ================= WORLD ================= */
+function updateWorld() {
+    if (player.laneY < highestRow) {
+        highestRow = player.laneY;
+        score++;
+        document.getElementById("score").innerText = "Score: " + score;
+    }
+    for (let r = player.laneY - VIEW_AHEAD; r <= player.laneY + VIEW_BEHIND; r++)
+        if (!lanes.has(r)) lanes.set(r, generateLane(r));
+
+    for (const r of lanes.keys()) if (r < player.laneY - VIEW_AHEAD - 2 || r > player.laneY + VIEW_BEHIND + 2) lanes.delete(r);
+
+    cameraY += (player.y - canvas.height/2 - cameraY) * 0.15;
+}
+
+/* ================= UPDATE ================= */
+function moveCars() {
+    lanes.forEach(lane => lane.cars.forEach(c=>{
+        c.x+=c.speed;
+        if(c.speed>0 && c.x>canvas.width+80)c.x=-80;
+        if(c.speed<0 && c.x<-80)c.x=canvas.width+80;
+    }));
+}
+
+function checkCollision() {
+    lanes.forEach(lane => lane.cars.forEach(c=>{
+        if(player.x<c.x+c.w && player.x+player.size>c.x && player.y<c.y+c.h && player.y+player.size>c.y){
+            gameOver = true;
+            document.getElementById("gameOverModal").style.display = "flex";
+        }
+    }));
+    const lane = lanes.get(player.laneY);
+    if(lane && lane.coins.length) for(let i=lane.coins.length-1;i>=0;i--) if(lane.coins[i].col===player.laneX){gold++; lane.coins.splice(i,1);}
+}
+
+/* ================= DRAW ================= */
+function draw() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    [...lanes.keys()].sort((a,b)=>a-b).forEach(r=>{
+        const lane = lanes.get(r);
+        const y = r*LANE_HEIGHT - cameraY;
+
+        ctx.fillStyle = lane.type==="road"?"#555":"#6dbf4b";
+        ctx.fillRect(0,y,canvas.width,LANE_HEIGHT);
+
+        // Barrier 10 lanes below start
+        if (r===startRow+10){
+            ctx.fillStyle="red";
+            ctx.fillRect(0,y,canvas.width,LANE_HEIGHT);
+        }
+
+        const next = lanes.get(r+1);
+        if(lane.type==="road" && next && next.type==="road"){
+            ctx.strokeStyle="rgba(255,255,255,0.8)";
+            ctx.lineWidth=4;
+            ctx.setLineDash([20,16]);
+            ctx.beginPath();
+            ctx.moveTo(0,y+LANE_HEIGHT);
+            ctx.lineTo(canvas.width,y+LANE_HEIGHT);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        lane.trees.forEach(t=>{
+            const x=t.col*TILE;
+            ctx.fillStyle="#4e342e";
+            ctx.fillRect(x+TILE/3,y+LANE_HEIGHT-40,TILE/3,40);
+            ctx.fillStyle="#2e7d32";
+            ctx.beginPath();
+            ctx.ellipse(x+TILE/2,y+LANE_HEIGHT-45,TILE/2,12,0,0,Math.PI*2);
+            ctx.fill();
+        });
+
+        lane.coins.forEach(c=>{
+            const x=c.col*TILE+TILE/2;
+            const cy=y+LANE_HEIGHT/2;
+            ctx.fillStyle="gold";
+            ctx.beginPath();
+            ctx.arc(x,cy,8,0,Math.PI*2);
+            ctx.fill();
+            ctx.strokeStyle="#b8860b";
+            ctx.stroke();
+        });
+    });
+
+    lanes.forEach(l=>l.cars.forEach(drawCar));
+    drawPlayer();
+
+    ctx.fillStyle="gold";
+    ctx.beginPath();
+    ctx.arc(canvas.width-50,40,12,0,Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle="#b8860b";
+    ctx.stroke();
+    ctx.fillStyle="white";
+    ctx.font="20px Arial";
+    ctx.fillText(gold,canvas.width-30,45);
+}
+
+/* ================= INPUT ================= */
+function movePlayer(dx,dy){
+    if(gameOver) return;
+    let nx=player.laneX+dx;
+    let ny=player.laneY+dy;
+
+    if(nx<0) nx=0;
+    if(nx>Math.floor(canvas.width/TILE)-1) nx=Math.floor(canvas.width/TILE)-1;
+
+    if(ny>startRow+10) ny=startRow+10;
+
+    const lane = lanes.get(ny);
+    if(lane && lane.type==="grass" && lane.trees.find(t=>t.col===nx)) return;
+    player.laneX=nx;
+    player.laneY=ny;
+    gridToWorld();
+}
+
+// Key controls: WASD + arrows
+document.addEventListener("keydown",e=>{
+    if(["w","a","s","d","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) e.preventDefault();
+    if(e.key==="w"||e.key==="ArrowUp") movePlayer(0,-1);
+    if(e.key==="s"||e.key==="ArrowDown") movePlayer(0,1);
+    if(e.key==="a"||e.key==="ArrowLeft") movePlayer(-1,0);
+    if(e.key==="d"||e.key==="ArrowRight") movePlayer(1,0);
+});
+
+// Touch controls
+let touchStartX=0, touchStartY=0;
+canvas.addEventListener("touchstart", e=>{
+    const t=e.touches[0];
+    touchStartX=t.clientX;
+    touchStartY=t.clientY;
+});
+canvas.addEventListener("touchend", e=>{
+    const t=e.changedTouches[0];
+    const dx=t.clientX-touchStartX;
+    const dy=t.clientY-touchStartY;
+    if(Math.abs(dx)>Math.abs(dy)){
+        if(dx>0) movePlayer(1,0);
+        else movePlayer(-1,0);
+    } else {
+        if(dy>0) movePlayer(0,1);
+        else movePlayer(0,-1);
+    }
+});
+
+/* ================= LOOP ================= */
+function smoothMove(){
+    player.x+=(player.targetX-player.x)*0.25;
+    player.y+=(player.targetY-player.y)*0.25;
+}
+function loop(){
+    smoothMove();
+    updateWorld();
+    moveCars();
+    checkCollision();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+/* ================= MODALS ================= */
+document.getElementById("restartBtn").onclick = ()=>{
+    lanes.clear();
+    player.laneX=4; 
+    player.laneY=SAFE_START_LANES;
+    gridToWorld(); player.x=player.targetX; player.y=player.targetY;
+    cameraY = player.y - canvas.height/2;
+    highestRow=startRow; score=0; gameOver=false;
+    document.getElementById("gameOverModal").style.display="none";
+    document.getElementById("score").innerText="Score: 0";
+}
+
+// Shop modal
+const shopModal=document.getElementById("shopModal");
+document.getElementById("openShopBtn").onclick=()=>shopModal.style.display="flex";
+document.getElementById("closeShopBtn").onclick=()=>shopModal.style.display="none";
+
+// Add chicken skin
+const skinsContainer=document.getElementById("skinsContainer");
+function addSkin(name,price){
+    const div=document.createElement("div"); div.className="skinCard";
+    const canvasEl=document.createElement("canvas");
+    canvasEl.width=60; canvasEl.height=60; canvasEl.className="skinCanvas";
+    div.appendChild(canvasEl);
+    const ctxSkin=canvasEl.getContext("2d");
+    if(name==="chicken"){
+        ctxSkin.fillStyle="skyblue";
+        ctxSkin.fillRect(0,0,60,60);
+        ctxSkin.fillStyle="white"; ctxSkin.fillRect(10,20,40,30); // body
+        ctxSkin.fillStyle="red"; ctxSkin.fillRect(25,10,10,10); // comb
+        ctxSkin.fillStyle="black"; ctxSkin.fillRect(15,25,5,5); ctxSkin.fillRect(40,25,5,5); // eyes
+        ctxSkin.fillStyle="yellow"; ctxSkin.fillRect(20,45,5,10); ctxSkin.fillRect(35,45,5,10); // legs
+    }
+    const priceEl=document.createElement("div"); priceEl.className="skinPrice";
+    priceEl.innerHTML = `<span style="display:inline-block;width:12px;height:12px;background:gold;border-radius:50%;border:2px solid #b8860b;margin-right:4px;"></span>${2}`;
+    div.appendChild(priceEl);
+    div.onclick=()=>{
+        if(gold>=2){gold-=2; player.skin=name; shopModal.style.display="none";}
+        else alert("Not enough gold!");
+    }
+    skinsContainer.appendChild(div);
+}
+addSkin("chicken",2);
+
+loop();
+</script>
+</body>
+</html>
