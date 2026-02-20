@@ -129,7 +129,6 @@
     </div>
 
     <script>
-        /* REPLACE THE TEXT INSIDE THE u QUOTES BELOW */
         const S_URL = 'https://nctldcfwggidluublhut.supabase.co'; 
         const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5jdGxkY2Z3Z2dpZGx1dWJsaHV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE2MTU1ODUsImV4cCI6MjA4NzE5MTU4NX0.7S4x_UmRHVDxc6Bst4G8khsS3dn4mOW45z3wd2jECsQ'; 
         
@@ -155,15 +154,21 @@
 
             if(!n || !d) return alert("Please enter name and drink!");
 
+            // Updated to match your exact columns: customer, drink_info, status
             const { error } = await sb
                 .from('orders')
-                .insert([{ customer_name: n, drink_info: d, status: 'pending' }]);
+                .insert([{ 
+                    customer: n, 
+                    drink_info: d, 
+                    status: 'pending' 
+                }]);
 
             if (!error) {
                 alert("Order Sent!");
                 location.reload();
             } else {
-                alert("Error! Check your Supabase keys.");
+                console.error(error);
+                alert("Error: " + error.message);
             }
         }
     </script>
