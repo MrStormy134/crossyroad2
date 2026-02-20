@@ -7,20 +7,18 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
-            background-color: #00001a; /* Midnight Dark Blue */
+            background-color: #00001a;
             margin: 0;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             color: white;
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             text-align: center;
-            overflow: hidden;
         }
 
-        /* Top Right Sign In */
         .admin-login {
             position: absolute;
             top: 20px;
@@ -65,15 +63,15 @@
             color: #00001a;
         }
 
-        #order-screen {
+        #order-screen, #admin-screen {
             display: none;
             width: 85%;
-            max-width: 350px;
+            max-width: 400px;
         }
 
         h2 { font-weight: 200; letter-spacing: 5px; margin-bottom: 30px; }
 
-        input, select {
+        input, textarea {
             width: 100%;
             padding: 15px;
             margin: 10px 0;
@@ -84,9 +82,13 @@
             box-sizing: border-box;
             font-size: 1rem;
             outline: none;
+            font-family: inherit;
         }
 
-        option { color: black; }
+        textarea {
+            height: 120px;
+            resize: none;
+        }
 
         .submit-btn {
             background: white;
@@ -99,6 +101,16 @@
             letter-spacing: 2px;
             cursor: pointer;
         }
+
+        .order-card {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            margin: 10px 0;
+            text-align: left;
+            border-left: 3px solid white;
+        }
+        .order-card span { display: block; font-size: 0.8rem; opacity: 0.7; letter-spacing: 1px; }
+        .order-card strong { font-size: 1.1rem; text-transform: uppercase; white-space: pre-wrap; }
     </style>
 </head>
 <body>
@@ -116,16 +128,16 @@
         <h2>NEW ORDER</h2>
         <input type="text" id="cust-name" placeholder="YOUR NAME">
         
-        <select id="cust-drink">
-            <option value="" disabled selected>CHOOSE A DRINK...</option>
-            <option value="Sparkling Water">Sparkling Water</option>
-            <option value="Apple Juice">Apple Juice</option>
-            <option value="Orange Juice">Orange Juice</option>
-            <option value="Custom Order">Custom Order</option>
-        </select>
+        <textarea id="cust-drink" placeholder="WHAT CAN I GET YOU?"></textarea>
 
-        <button class="submit-btn" onclick="submitToSupabase()">SUBMIT</button>
+        <button class="submit-btn" onclick="submitToSupabase()">SUBMIT ORDER</button>
         <p onclick="location.reload()" style="margin-top:30px; font-size:0.7rem; cursor:pointer; opacity:0.6;">CANCEL</p>
+    </div>
+
+    <div id="admin-screen">
+        <h2>PENDING ORDERS</h2>
+        <div id="orders-list">Loading orders...</div>
+        <button class="submit-btn" onclick="location.reload()">REFRESH / LOGOUT</button>
     </div>
 
     <script>
@@ -139,36 +151,71 @@
             document.getElementById('order-screen').style.display = 'block';
         }
 
-        function adminLogin() {
+        async function adminLogin() {
             let user = prompt("Username:");
+            // Works for "Isabelle", "isabelle", "ISABELLE", etc.
             if (user && user.toLowerCase() === "isabelle") {
-                window.location.href = "ipad.html";
+                showAdminDashboard();
             } else if (user !== null) {
                 alert("Access Denied");
             }
+        }
+
+        function showAdminDashboard() {
+            document.getElementById('main-screen').style.display = 'none';
+            document.getElementById('order-screen').style.display = 'none';
+            document.getElementById('admin-screen').style.display = 'block';
+            fetchOrders();
+        }
+
+        async function fetchOrders() {
+            const listDiv = document.getElementById('orders-list');
+            
+            const { data, error } = await sb
+                .from('orders')
+                .select('*')
+                .eq('status', 'pending')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                listDiv.innerHTML = "Error loading orders.";
+                return;
+            }
+
+            if (data.length === 0) {
+                listDiv.innerHTML = "<p>No pending orders!</p>";
+                return;
+            }
+
+            listDiv.innerHTML = ""; 
+            data.forEach(order => {
+                const card = document.createElement('div');
+                card.className = 'order-card';
+                card.innerHTML = `
+                    <span>CUSTOMER</span>
+                    <strong>${order.customer_name}</strong>
+                    <span style="margin-top:10px;">ORDER</span>
+                    <strong>${order.drink_info}</strong>
+                `;
+                listDiv.appendChild(card);
+            });
         }
 
         async function submitToSupabase() {
             const n = document.getElementById('cust-name').value;
             const d = document.getElementById('cust-drink').value;
 
-            if(!n || !d) return alert("Please enter name and drink!");
+            if(!n || !d) return alert("Please enter your name and what you'd like!");
 
-            // Updated to match your exact columns: customer, drink_info, status
             const { error } = await sb
                 .from('orders')
-                .insert([{ 
-                    customer: n, 
-                    drink_info: d, 
-                    status: 'pending' 
-                }]);
+                .insert([{ customer_name: n, drink_info: d, status: 'pending' }]);
 
             if (!error) {
                 alert("Order Sent!");
                 location.reload();
             } else {
-                console.error(error);
-                alert("Error: " + error.message);
+                alert("Error! Check your Supabase connection.");
             }
         }
     </script>
