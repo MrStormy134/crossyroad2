@@ -25,43 +25,28 @@
 
     .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
 
-    .featured { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
-    .featured-main { background: white; border: 1px solid #ddd; overflow: hidden; }
-    .featured-main .img-placeholder { width: 100%; height: 320px; background: #ccc; display: flex; align-items: center; justify-content: center; color: #888; font-family: Arial, sans-serif; }
-    .featured-main .content { padding: 1.2rem; }
-    .featured-sidebar { display: flex; flex-direction: column; gap: 1rem; }
-    .side-article { background: white; border: 1px solid #ddd; padding: 1rem; flex: 1; }
-
     .section-heading { font-family: Arial, sans-serif; font-size: 1rem; font-weight: bold; text-transform: uppercase; color: #cc0000; border-bottom: 3px solid #cc0000; padding-bottom: 0.4rem; margin-bottom: 1.2rem; }
     .section { margin-bottom: 2.5rem; }
     .article-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
-    .article-card { background: white; border: 1px solid #ddd; overflow: hidden; }
+    .article-card { background: white; border: 1px solid #ddd; overflow: hidden; cursor: pointer; }
+    .article-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
     .article-card .img-placeholder { width: 100%; height: 160px; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #aaa; font-family: Arial, sans-serif; font-size: 0.8rem; }
     .article-card .card-content { padding: 0.9rem; }
-
-    .category-tag { font-family: Arial, sans-serif; font-size: 0.7rem; font-weight: bold; text-transform: uppercase; color: #cc0000; margin-bottom: 0.3rem; }
     .article-card h3 { font-size: 1rem; line-height: 1.4; margin-bottom: 0.4rem; }
-    .article-card h3 a, .side-article h3 a { color: #111; text-decoration: none; }
-    .article-card h3 a:hover, .side-article h3 a:hover { color: #cc0000; }
+    .article-card h3 a { color: #111; text-decoration: none; }
+    .article-card h3 a:hover { color: #cc0000; }
     .excerpt { font-size: 0.85rem; color: #555; line-height: 1.5; font-family: Arial, sans-serif; }
     .meta { font-family: Arial, sans-serif; font-size: 0.75rem; color: #999; margin-top: 0.6rem; }
-
-    .featured-main h2 { font-size: 1.6rem; line-height: 1.3; margin-bottom: 0.6rem; }
-    .featured-main h2 a { color: #111; text-decoration: none; }
-    .featured-main h2 a:hover { color: #cc0000; }
-    .featured-main .excerpt { font-size: 0.95rem; color: #444; line-height: 1.6; }
-    .side-article h3 { font-size: 1rem; line-height: 1.4; }
+    .loading { font-family: Arial, sans-serif; color: #888; padding: 1rem 0; }
 
     footer { background: #111; color: #aaa; text-align: center; padding: 1.5rem; font-family: Arial, sans-serif; font-size: 0.85rem; margin-top: 2rem; }
     footer a { color: #cc0000; text-decoration: none; }
 
     @media (max-width: 768px) {
-      .featured { grid-template-columns: 1fr; }
       .article-grid { grid-template-columns: 1fr; }
       .site-title { font-size: 1.6rem; }
     }
   </style>
-  
 </head>
 <body>
 
@@ -84,68 +69,93 @@
   </div>
 
   <div class="container">
-  <div id="6a9ca31c5cbe428cde4b9a0ae5656cd5" class="ww-informers-box-854753"><p class="ww-informers-box-854754"><a href="https://world-weather.info/forecast/united_kingdom/london/">Weather today</a><br><a href="https://world-weather.info/widget/">world-weather.info/widget/</a></p></div><script async type="text/javascript" charset="utf-8" src="https://world-weather.info/wwinformer.php?userid=6a9ca31c5cbe428cde4b9a0ae5656cd5"></script><style>.ww-informers-box-854754{-webkit-animation-name:ww-informers54;animation-name:ww-informers54;-webkit-animation-duration:1.5s;animation-duration:1.5s;white-space:nowrap;overflow:hidden;-o-text-overflow:ellipsis;text-overflow:ellipsis;font-size:12px;font-family:Arial;line-height:18px;text-align:center}@-webkit-keyframes ww-informers54{0%,80%{opacity:0}100%{opacity:1}}@keyframes ww-informers54{0%,80%{opacity:0}100%{opacity:1}}</style>
-  <div class="section">
-  <div class="section-heading">Latest News</div>
+    <div id="6a9ca31c5cbe428cde4b9a0ae5656cd5" class="ww-informers-box-854753"><p class="ww-informers-box-854754"><a href="https://world-weather.info/forecast/united_kingdom/london/">Weather today</a><br><a href="https://world-weather.info/widget/">world-weather.info/widget/</a></p></div>
+    <script async type="text/javascript" charset="utf-8" src="https://world-weather.info/wwinformer.php?userid=6a9ca31c5cbe428cde4b9a0ae5656cd5"></script>
+    <style>.ww-informers-box-854754{-webkit-animation-name:ww-informers54;animation-name:ww-informers54;-webkit-animation-duration:1.5s;animation-duration:1.5s;white-space:nowrap;overflow:hidden;-o-text-overflow:ellipsis;text-overflow:ellipsis;font-size:12px;font-family:Arial;line-height:18px;text-align:center}@-webkit-keyframes ww-informers54{0%,80%{opacity:0}100%{opacity:1}}@keyframes ww-informers54{0%,80%{opacity:0}100%{opacity:1}}</style>
 
-  <div class="article-grid">
-
-    <article class="article-card">
-      <img src="https://i2-prod.mylondon.news/incoming/article31589487.ece/ALTERNATES/s1200/0_JS362841161.jpg"
-           style="width:100%; height:160px; object-fit:cover;">
-
-      <div class="card-content">
-        <div class="category-tag">Politics</div>
-
-        <h3>
-          <a href="#">
-            Jason Perry Wins Second Term as Croydon Mayor
-          </a>
-        </h3>
-
-        <p class="excerpt">
-          Conservative candidate Jason Perry has been re-elected as Mayor of Croydon after a closely fought election against Labour challenger Rowenna Davis.
-        </p>
-
-        <div class="meta">
-          May 9, 2026
-        </div>
+    <div class="section">
+      <div class="section-heading">Latest News</div>
+      <div id="article-grid" class="article-grid">
+        <p class="loading">Loading articles...</p>
       </div>
-    </article>
+    </div>
 
+    <meta name="8acf4608b264e52f2dc5eca34c20a32ea59f7ac0" content="8acf4608b264e52f2dc5eca34c20a32ea59f7ac0" />
   </div>
-</div>
-<meta name="8acf4608b264e52f2dc5eca34c20a32ea59f7ac0" content="8acf4608b264e52f2dc5eca34c20a32ea59f7ac0" />
-</div>
 
-<footer>
+  <footer>
     <p>&copy; 2026 Croydon News &bull; <a href="#">Contact</a> &bull; <a href="#">About</a> &bull; <a href="/admin">Admin</a></p>
   </footer>
-<script>
-(function(wlj){
-var d = document,
-    s = d.createElement('script'),
-    l = d.scripts[d.scripts.length - 1];
-s.settings = wlj || {};
-s.src = "\/\/masculine-employment.com\/b.XzVMsNdAG-lK0pYPWlcJ\/beRm\/9fuXZXU-l\/kVP\/TncXwOMLjBgR2ANaT_MztyNZzbAjyaO\/D\/Yc1QNgwE";
-s.async = true;
-s.referrerPolicy = 'no-referrer-when-downgrade';
-l.parentNode.insertBefore(s, l);
-})({})
-</script>
-<script>
-(function(wlj){
-var d = document,
-    s = d.createElement('script'),
-    l = d.scripts[d.scripts.length - 1];
-s.settings = wlj || {};
-s.src = "\/\/masculine-employment.com\/b.XzVMsNdAG-lK0pYPWlcJ\/beRm\/9fuXZXU-l\/kVP\/TncXwOMLjBgR2ANaT_MztyNZzbAjyaO\/D\/Yc1QNgwE";
-s.async = true;
-s.referrerPolicy = 'no-referrer-when-downgrade';
-l.parentNode.insertBefore(s, l);
-})({})
-</script>
 
+  <script>
+    const REPO = "MrStormy134/crossyroad2";
+    const BRANCH = "main";
+
+    async function loadArticles() {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${REPO}/contents/articles?ref=${BRANCH}`);
+        const files = await res.json();
+        const mdFiles = files.filter(f => f.name.endsWith('.md'));
+
+        if (mdFiles.length === 0) {
+          document.getElementById('article-grid').innerHTML = '<p class="loading">No articles yet.</p>';
+          return;
+        }
+
+        const articles = await Promise.all(mdFiles.map(async f => {
+          const r = await fetch(f.download_url);
+          const text = await r.text();
+          return parseArticle(text, f.name);
+        }));
+
+        // Sort newest first
+        articles.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+        renderArticles(articles);
+      } catch (e) {
+        document.getElementById('article-grid').innerHTML = '<p class="loading">Failed to load articles.</p>';
+      }
+    }
+
+    function parseArticle(text, filename) {
+      const frontmatter = text.match(/---\n([\s\S]*?)\n---/);
+      const meta = {};
+      if (frontmatter) {
+        frontmatter[1].split('\n').forEach(line => {
+          const colonIndex = line.indexOf(':');
+          if (colonIndex > -1) {
+            const key = line.substring(0, colonIndex).trim();
+            const val = line.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
+            if (key) meta[key] = val;
+          }
+        });
+      }
+      const body = text.replace(/---[\s\S]*?---/, '').trim();
+      return { ...meta, body, filename };
+    }
+
+    function renderArticles(articles) {
+      const grid = document.getElementById('article-grid');
+      grid.innerHTML = articles.map(a => {
+        const imageUrl = a.image ? (a.image.startsWith('http') ? a.image : `/images/uploads/${a.image.replace('/images/uploads/', '')}`) : null;
+        const excerpt = a.body.replace(/[#*`]/g, '').substring(0, 120).trim();
+        return `
+          <article class="article-card" onclick="window.location.href='article.html?file=${encodeURIComponent(a.filename)}'">
+            ${imageUrl
+              ? `<img src="${imageUrl}" style="width:100%;height:160px;object-fit:cover;" onerror="this.parentNode.innerHTML='<div class=\\'img-placeholder\\'>No Image</div>'">`
+              : '<div class="img-placeholder">No Image</div>'}
+            <div class="card-content">
+              <h3><a href="article.html?file=${encodeURIComponent(a.filename)}">${a.title || 'Untitled'}</a></h3>
+              <p class="excerpt">${excerpt}...</p>
+              <div class="meta">${a.date || ''}</div>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    loadArticles();
+  </script>
 
 </body>
 </html>
