@@ -1,5 +1,6 @@
 ---
 title: Jason Perry Wins Second Term as Croydon Mayor
+image: /images/uploads/mayoral-election-2026-news-site.png
 ---
 Jason Perry has been re-elected as Mayor of Croydon after a closely fought election that saw the Conservatives narrowly hold onto the borough’s top political role.
 
