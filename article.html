@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Croydon News</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Georgia, 'Times New Roman', serif; background: #f4f4f4; color: #111; }
+
+    header { background: #cc0000; color: white; padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 4px solid #900000; }
+    .site-title { font-size: 2.4rem; font-weight: bold; letter-spacing: -1px; padding: 1rem 0; text-transform: uppercase; }
+    .site-title span { color: #ffcccc; font-size: 1rem; display: block; letter-spacing: 2px; font-family: Arial, sans-serif; font-weight: normal; }
+    .sign-in-btn { background: white; color: #cc0000; border: none; padding: 0.5rem 1.2rem; font-size: 0.9rem; font-family: Arial, sans-serif; font-weight: bold; cursor: pointer; border-radius: 3px; text-decoration: none; }
+
+    nav { background: #111; display: flex; overflow-x: auto; }
+    nav a { color: #fff; text-decoration: none; padding: 0.75rem 1.4rem; font-family: Arial, sans-serif; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; white-space: nowrap; border-right: 1px solid #333; }
+    nav a:hover { background: #cc0000; }
+
+    .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+
+    .back-link { font-family: Arial, sans-serif; font-size: 0.85rem; color: #cc0000; text-decoration: none; display: inline-block; margin-bottom: 1.5rem; }
+    .back-link:hover { text-decoration: underline; }
+
+    .article-header { margin-bottom: 1.5rem; }
+    .article-header h1 { font-size: 2rem; line-height: 1.3; margin-bottom: 0.5rem; }
+    .meta { font-family: Arial, sans-serif; font-size: 0.85rem; color: #999; }
+
+    .article-image { width: 100%; max-height: 400px; object-fit: cover; margin-bottom: 1.5rem; border: 1px solid #ddd; }
+
+    .article-body { background: white; border: 1px solid #ddd; padding: 2rem; line-height: 1.8; font-size: 1rem; }
+    .article-body p { margin-bottom: 1rem; }
+    .article-body h1, .article-body h2, .article-body h3 { margin: 1.5rem 0 0.5rem; }
+
+    .loading { font-family: Arial, sans-serif; color: #888; padding: 1rem 0; }
+
+    footer { background: #111; color: #aaa; text-align: center; padding: 1.5rem; font-family: Arial, sans-serif; font-size: 0.85rem; margin-top: 2rem; }
+    footer a { color: #cc0000; text-decoration: none; }
+
+    @media (max-width: 768px) {
+      .site-title { font-size: 1.6rem; }
+      .article-header h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="site-title">Croydon News<span>Your local news source</span></div>
+    <a href="/admin" class="sign-in-btn">Sign In</a>
+  </header>
+
+  <nav>
+    <a href="/">Home</a>
+    <a href="/#local-news">Local News</a>
+    <a href="/#crime">Crime</a>
+    <a href="/#sport">Sport</a>
+    <a href="/#events">Events</a>
+  </nav>
+
+  <div class="container">
+    <a href="/" class="back-link">&larr; Back to Home</a>
+    <div id="article-content"><p class="loading">Loading article...</p></div>
+  </div>
+
+  <footer>
+    <p>&copy; 2026 Croydon News &bull; <a href="#">Contact</a> &bull; <a href="#">About</a> &bull; <a href="/admin">Admin</a></p>
+  </footer>
+
+  <script>
+    const REPO = "MrStormy134/crossyroad2";
+    const BRANCH = "main";
+
+    function parseArticle(text) {
+      const frontmatter = text.match(/---\n([\s\S]*?)\n---/);
+      const meta = {};
+      if (frontmatter) {
+        frontmatter[1].split('\n').forEach(line => {
+          const colonIndex = line.indexOf(':');
+          if (colonIndex > -1) {
+            const key = line.substring(0, colonIndex).trim();
+            const val = line.substring(colonIndex + 1).trim().replace(/^["']|["']$/g, '');
+            if (key) meta[key] = val;
+          }
+        });
+      }
+      const body = text.replace(/---[\s\S]*?---/, '').trim();
+      return { ...meta, body };
+    }
+
+    function markdownToHtml(md) {
+      return md
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/^/, '<p>')
+        .replace(/$/, '</p>');
+    }
+
+    async function loadArticle() {
+      const params = new URLSearchParams(window.location.search);
+      const filename = params.get('file');
+
+      if (!filename) {
+        document.getElementById('article-content').innerHTML = '<p class="loading">No article specified.</p>';
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://raw.githubusercontent.com/${REPO}/${BRANCH}/articles/${filename}`);
+        if (!res.ok) throw new Error('Not found');
+        const text = await res.text();
+        const article = parseArticle(text);
+
+        document.title = `${article.title || 'Article'} - Croydon News`;
+
+        const imageUrl = article.image
+          ? (article.image.startsWith('http') ? article.image : `/images/uploads/${article.image.replace('/images/uploads/', '')}`)
+          : null;
+
+        document.getElementById('article-content').innerHTML = `
+          <div class="article-header">
+            <h1>${article.title || 'Untitled'}</h1>
+            <div class="meta">${article.date || ''}</div>
+          </div>
+          ${imageUrl ? `<img src="${imageUrl}" class="article-image" alt="${article.title || ''}">` : ''}
+          <div class="article-body">${markdownToHtml(article.body)}</div>
+        `;
+      } catch (e) {
+        document.getElementById('article-content').innerHTML = '<p class="loading">Article not found.</p>';
+      }
+    }
+
+    loadArticle();
+  </script>
+
+</body>
+</html>
